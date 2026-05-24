@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sri Lanka Transport Booking · Survey Analysis Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;500;600&family=JetBrains+Mono:wght@500;700&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <style>
+    :root {
+      /* Light Theme / Report Colors */
+      --bg: #F1F5F9;
+      /* Slate 100 - Page background */
+      --surface: #FFFFFF;
+      /* White - Card background */
+      --s2: #F8FAFC;
+      /* Slate 50 - Subtle highlights */
+      --border: #E2E8F0;
+      /* Slate 200 - Standard borders */
+      --border2: #CBD5E1;
+      /* Slate 300 - Stronger borders */
+
+      --text: #0F172A;
+      /* Slate 900 - Primary text */
+      --muted: #64748B;
+      /* Slate 500 - Secondary text */
+      --muted2: #475569;
+      /* Slate 600 - Emphasized secondary */
+
+      /* Vibrant professional palette */
+      --c1: #2563EB;
+      /* Royal Blue */
+      --c2: #059669;
+      /* Emerald Green */
+      --c3: #DC2626;
+      /* Crimson Red */
+      --c4: #D97706;
+      /* Amber */
+      --c5: #7C3AED;
+      /* Violet */
+      --c6: #0D9488;
+      /* Teal */
+      --c7: #DB2777;
+      /* Pink */
+      --c8: #2563EB;
+      /* Blue duplicate for fallbacks */
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-size: 14px;
+    }
+
+    ::selection {
+      background: rgba(37, 99, 235, 0.2);
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 4px;
+    }
+
+    /* HEADER */
+    header {
+      padding: 2rem 2.5rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .logo-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--s2);
+      border: 1px solid var(--border);
+      display: grid;
+      place-items: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .header-left h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1.1;
+    }
+
+    .header-left p {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+      font-weight: 500;
+    }
+
+    .header-badges {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      padding: 0.4rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge.blue {
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--c1);
+    }
+
+    .badge.green {
+      background: rgba(5, 150, 105, 0.1);
+      color: var(--c2);
+    }
+
+    .badge.muted {
+      background: var(--s2);
+      color: var(--muted2);
+      border: 1px solid var(--border);
+    }
+
+    /* MAIN CONTENT */
+    main {
+      padding: 2rem 2.5rem 4rem;
+      max-width: 1700px;
+      margin: 0 auto;
+    }
+
+    /* SECTION LABEL */
+    .section-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted2);
+      margin-bottom: 1rem;
+      margin-top: 2.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .section-label::before {
+      content: '';
+      width: 4px;
+      height: 16px;
+      border-radius: 2px;
+      background: var(--c1);
+      display: block;
+    }
+
+    .section-label:first-child {
+      margin-top: 0;
+    }
+
+    /* KPI GRID */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      border-top: 4px solid var(--kpi-accent, var(--c1));
+    }
+
+    .kpi-card::after {
+      content: var(--kpi-emoji, '📊');
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 1.5rem;
+      opacity: 0.15;
+      filter: grayscale(100%);
+    }
+
+    .kpi-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .kpi-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .kpi-value sub {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-left: 2px;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .kpi-sub {
+      font-size: 0.75rem;
+      color: var(--muted2);
+      margin-top: 0.6rem;
+      line-height: 1.4;
+    }
+
+    .kpi-trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      margin-top: 0.5rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 1rem;
+      font-weight: 600;
+    }
+
+    .kpi-trend.up {
+      background: rgba(5, 150, 105, 0.1);
+      color: var(--c2);
+    }
+
+    .kpi-trend.warn {
+      background: rgba(217, 119, 6, 0.1);
+      color: var(--c4);
+    }
+
+    .kpi-trend.neutral {
+      background: var(--s2);
+      border: 1px solid var(--border);
+      color: var(--muted2);
+    }
+
+    /* CHART GRID */
+    .charts-row {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .row-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .row-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .row-2-1 {
+      grid-template-columns: 2fr 1fr;
+    }
+
+    /* CHART CARD */
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .chart-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.3rem;
+    }
+
+    .chart-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      font-weight: 400;
+      line-height: 1.4;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 0.8rem;
+    }
+
+    .chart-body {
+      width: 100%;
+    }
+
+    /* LEGEND */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      margin-top: 1.2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--s2);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.7rem;
+      color: var(--muted2);
+      font-weight: 500;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* INSIGHTS CARD */
+    .insights-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .insight-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--s2);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .insight-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1;
+      flex-shrink: 0;
+      min-width: 2.5rem;
+    }
+
+    .insight-text {
+      font-size: 0.8rem;
+      color: var(--muted2);
+      line-height: 1.5;
+    }
+
+    .insight-text strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* STAT BARS (inline progress) */
+    .stat-bar-wrap {
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .stat-bar-label {
+      font-size: 0.75rem;
+      color: var(--text);
+      font-weight: 500;
+      min-width: 140px;
+      flex-shrink: 0;
+    }
+
+    .stat-bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--s2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .stat-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 1s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .stat-bar-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text);
+      font-weight: 700;
+      min-width: 35px;
+      text-align: right;
+    }
+
+    /* DARK TOOLTIP FOR HIGH CONTRAST */
+    #tooltip {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      background: #0F172A;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      font-size: 0.75rem;
+      color: #F8FAFC;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      transition: opacity 0.12s;
+      max-width: 220px;
+      line-height: 1.5;
+    }
+
+    #tooltip.show {
+      opacity: 1;
+    }
+
+    #tooltip strong {
+      color: #60A5FA;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    #tooltip .tip-val {
+      color: #FFFFFF;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    /* RESPONSIVE */
+    @media(max-width:1200px) {
+      .kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .row-3 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media(max-width:820px) {
+      main {
+        padding: 1rem;
+      }
+
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .row-3,
+      .row-2,
+      .row-2-1 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media(max-width:480px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="logo-bar">
+      <div class="logo-icon">📄</div>
+      <div class="header-left">
+        <h1>Transport Booking Experience Report</h1>
+        <p>Data Analytics & User Research · April 2026</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <div class="badge blue">n = 115 Responses</div>
+      <div class="badge green">Field Study Review</div>
+      <div class="badge muted">Colombo Region</div>
+    </div>
+  </header>
+
+  <div id="tooltip"></div>
+
+  <main>
+
+    <div class="section-label">Executive Summary</div>
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--kpi-accent:var(--c1);--kpi-emoji:'👥'">
+        <div class="kpi-label">Total Respondents</div>
+        <div class="kpi-value">115</div>
+        <div class="kpi-sub">Valid surveys processed</div>
+        <span class="kpi-trend neutral">Primary dataset</span>
+      </div>
+      <div class="kpi-card" style="--kpi-accent:var(--c4);--kpi-emoji:'⭐'">
+        <div class="kpi-label">Avg. Satisfaction</div>
+        <div class="kpi-value">3.2<sub>/5</sub></div>
+        <div class="kpi-sub">Overall experience score</div>
+        <span class="kpi-trend warn">Requires improvement</span>
+      </div>
+      <div class="kpi-card" style="--kpi-accent:var(--c2);--kpi-emoji:'📈'">
+        <div class="kpi-label">Platform Adoption Intent</div>
+        <div class="kpi-value">53.9<sub>%</sub></div>
+        <div class="kpi-sub">Indicated strong willingness</div>
+        <span class="kpi-trend up">Positive outlook</span>
+      </div>
+      <div class="kpi-card" style="--kpi-accent:var(--c5);--kpi-emoji:'🎓'">
+        <div class="kpi-label">Primary Demographic</div>
+        <div class="kpi-value">81.7<sub>%</sub></div>
+        <div class="kpi-sub">University Student segment</div>
+        <span class="kpi-trend neutral">Core target audience</span>
+      </div>
+      <div class="kpi-card" style="--kpi-accent:var(--c6);--kpi-emoji:'🚌'">
+        <div class="kpi-label">Dominant Modality</div>
+        <div class="kpi-value">74.8<sub>%</sub></div>
+        <div class="kpi-sub">Utilize private buses most</div>
+        <span class="kpi-trend neutral">Market majority</span>
+      </div>
+    </div>
+
+    <div class="section-label">Demographics & User Behavior</div>
+    <div class="charts-row row-3">
+      <div class="chart-card">
+        <div class="chart-title">Travel Frequency Distribution</div>
+        <div class="chart-sub">Reported frequency of private transport usage</div>
+        <div class="chart-body" id="chart-freq"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Respondent Classification</div>
+        <div class="chart-sub">Demographic segmentation of the survey pool</div>
+        <div class="chart-body" id="chart-demo"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Transport Mode Utilization</div>
+        <div class="chart-sub">Primary mode of transport selected by users</div>
+        <div class="chart-body" id="chart-transport"></div>
+      </div>
+    </div>
+
+    <div class="section-label">Current Booking Ecosystem</div>
+    <div class="charts-row row-3">
+      <div class="chart-card">
+        <div class="chart-title">Existing Booking Channels</div>
+        <div class="chart-sub">Methods currently utilized to secure transport</div>
+        <div class="chart-body" id="chart-booking"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Digital Platform Preference</div>
+        <div class="chart-sub">Web vs. App preference for future bookings</div>
+        <div class="chart-body" id="chart-platform"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Experience Dimension Matrix</div>
+        <div class="chart-sub">Average scores across crucial UX dimensions (Max 5.0)</div>
+        <div class="chart-body" id="chart-radar"></div>
+      </div>
+    </div>
+
+    <div class="section-label">User Needs & Friction Points</div>
+    <div class="charts-row row-2">
+      <div class="chart-card">
+        <div class="chart-title">Prioritized Feature Requirements</div>
+        <div class="chart-sub">Features deemed most critical for platform success</div>
+        <div class="chart-body" id="chart-features"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Identified User Concerns</div>
+        <div class="chart-sub">Primary barriers and anxieties regarding online booking</div>
+        <div class="chart-body" id="chart-concerns"></div>
+      </div>
+    </div>
+
+    <div class="section-label">Adoption Projections & Monetization</div>
+    <div class="charts-row row-2">
+      <div class="chart-card">
+        <div class="chart-title">Projected Platform Adoption</div>
+        <div class="chart-sub">Likelihood of personal usage vs. peer recommendation</div>
+        <div class="chart-body" id="chart-adoption"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Value-Add Service Demand</div>
+        <div class="chart-sub">Ancillary services requested by respondents</div>
+        <div class="chart-body" id="chart-services"></div>
+      </div>
+    </div>
+
+    <div class="section-label">Strategic Overview</div>
+    <div class="charts-row row-2-1">
+      <div class="chart-card">
+        <div class="chart-title">Key Adoption Drivers</div>
+        <div class="chart-sub">Primary factors motivating transition to a unified platform</div>
+        <div class="chart-body" id="chart-factors"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Actionable Analyst Insights</div>
+        <div class="chart-sub">Crucial takeaways for product development</div>
+        <div class="insights-card" id="insights-card"></div>
+      </div>
+    </div>
+
+    <div class="section-label">Detailed Scoring Breakdown</div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Comprehensive Dimension Ratings</div>
+        <div class="chart-sub">Comparative view of all scored dimensions (Scale 1.0 - 5.0)</div>
+        <div class="chart-body" id="chart-ratings-bars" style="margin-top:1rem;"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    /* ═══════════════════════════════════════════════════
+       DATA & PALETTE
+    ═══════════════════════════════════════════════════ */
+    // Light theme optimized palette
+    const COLORS = ['#2563EB', '#059669', '#DC2626', '#D97706', '#7C3AED', '#0D9488', '#DB2777', '#3B82F6'];
+
+    const DATA = {
+      frequency: [
+        { label: 'Monthly', value: 44, pct: 38.3 }, { label: 'Rarely', value: 25, pct: 21.7 },
+        { label: 'Weekly', value: 24, pct: 20.9 }, { label: 'Daily', value: 22, pct: 19.1 }
+      ],
+      demographics: [
+        { label: 'University Student', value: 94 }, { label: 'Working Professional', value: 12 },
+        { label: 'Family Traveler', value: 8 }, { label: 'Tourist', value: 3 }
+      ],
+      transport: [
+        { label: 'Private Bus', value: 86 }, { label: 'Gov / CTB / SLTB', value: 15 },
+        { label: 'Tour Service', value: 7 }, { label: 'Other', value: 4 }, { label: 'Train / Airport', value: 3 }
+      ],
+      bookingMethods: [
+        { label: 'Website', value: 68 }, { label: 'Phone Call', value: 52 },
+        { label: 'Mobile App', value: 28 }, { label: 'Booking Office', value: 20 }
+      ],
+      platformPref: [
+        { label: 'Both', value: 42, pct: 36.5 }, { label: 'Mobile App', value: 38, pct: 33.0 }, { label: 'Website', value: 35, pct: 30.4 }
+      ],
+      ratings: [
+        { label: 'Real-Time Availability', value: 4.1 }, { label: 'Design Importance', value: 4.3 },
+        { label: 'Instant Confirmation', value: 4.0 }, { label: 'Likelihood to Use', value: 3.8 },
+        { label: 'Current Satisfaction', value: 3.2 }, { label: 'Overall Interest', value: 2.8 }
+      ],
+      features: [
+        { label: 'Easy Booking Process', value: 78 }, { label: 'Real-Time Availability', value: 62 },
+        { label: 'Secure Payment', value: 60 }, { label: 'Customer Support', value: 50 }
+      ],
+      concerns: [
+        { label: 'Payment Security', value: 68 }, { label: 'Booking Errors', value: 58 },
+        { label: 'Reliability', value: 52 }, { label: 'Privacy', value: 44 }
+      ],
+      adoption: [
+        { label: 'Yes', valuePlatform: 62, valueRecommend: 62 },
+        { label: 'Maybe', valuePlatform: 41, valueRecommend: 34 },
+        { label: 'No', valuePlatform: 12, valueRecommend: 19 }
+      ],
+      services: [
+        { label: 'Discounts', value: 72 }, { label: 'Loyalty Rewards', value: 52 },
+        { label: 'Tour Packages', value: 40 }, { label: 'Airport Transfers', value: 30 }
+      ],
+      factors: [
+        { label: 'Easy Booking', value: 78 }, { label: 'Discounts', value: 58 },
+        { label: 'Reliable Service', value: 48 }, { label: 'Fast Confirmation', value: 46 }
+      ],
+      ratingsBars: [
+        { label: 'Design Importance', value: 4.3, color: '#2563EB' }, { label: 'Real-Time Availability', value: 4.1, color: '#059669' },
+        { label: 'Instant Confirmation', value: 4.0, color: '#7C3AED' }, { label: 'Likelihood to Use', value: 3.8, color: '#0D9488' },
+        { label: 'Current Satisfaction', value: 3.2, color: '#D97706' }, { label: 'Overall Interest', value: 2.8, color: '#DC2626' }
+      ]
+    };
+
+    /* ═══════════════════════════════════════════════════
+       TOOLTIP LOGIC
+    ═══════════════════════════════════════════════════ */
+    const tip = document.getElementById('tooltip');
+    let tipTimer;
+    function showTip(evt, html) {
+      clearTimeout(tipTimer);
+      tip.innerHTML = html;
+      tip.classList.add('show');
+      moveTip(evt);
+    }
+    function moveTip(evt) {
+      let x = evt.clientX + 14, y = evt.clientY - 10;
+      if (x + 230 > window.innerWidth) x = evt.clientX - 234;
+      if (y + 80 > window.innerHeight) y = evt.clientY - 80;
+      tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    }
+    function hideTip() {
+      tipTimer = setTimeout(() => tip.classList.remove('show'), 80);
+    }
+    function cw(id) { return Math.max(document.getElementById(id).clientWidth || 300, 180); }
+
+    /* ═══════════════════════════════════════════════════
+       1. DONUT CHART
+    ═══════════════════════════════════════════════════ */
+    function drawDonut(id, data) {
+      const W = cw(id), H = 210, R = Math.min(W / 2, H / 2) - 10;
+      const cx = W / 2, cy = H / 2;
+      const svg = d3.select('#' + id).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+      const pie = d3.pie().value(d => d.value).sort(null).padAngle(0.015);
+      const arc = d3.arc().innerRadius(R * 0.62).outerRadius(R);
+      const arcH = d3.arc().innerRadius(R * 0.62).outerRadius(R + 6);
+      const total = d3.sum(data, d => d.value);
+      const g = svg.append('g').attr('transform', `translate(${cx},${cy})`);
+
+      const paths = g.selectAll('path').data(pie(data)).enter().append('path')
+        .attr('fill', (d, i) => COLORS[i]).attr('stroke', '#FFFFFF').attr('stroke-width', 2)
+        .style('cursor', 'pointer')
+        .on('mouseenter', function (evt, d) {
+          d3.select(this).transition().duration(150).attr('d', arcH);
+          const pct = d.data.pct !== undefined ? d.data.pct : ((d.data.value / total) * 100).toFixed(1);
+          showTip(evt, `<strong>${d.data.label}</strong><span class="tip-val">${d.data.value}</span> responses (${pct}%)`);
+        })
+        .on('mousemove', moveTip).on('mouseleave', function () {
+          d3.select(this).transition().duration(150).attr('d', arc); hideTip();
+        });
+
+      paths.each(function (d) { this._s = { startAngle: d.startAngle, endAngle: d.startAngle }; })
+        .attr('d', arc).transition().duration(900).attrTween('d', function (d) {
+          const i = d3.interpolate(this._s, d); return t => arc(i(t));
+        });
+
+      svg.append('text').attr('x', cx).attr('y', cy - 4).attr('text-anchor', 'middle')
+        .attr('font-family', 'Syne').attr('font-size', '1.6rem').attr('font-weight', '800')
+        .attr('fill', 'var(--text)').text(total);
+      svg.append('text').attr('x', cx).attr('y', cy + 14).attr('text-anchor', 'middle')
+        .attr('font-size', '0.65rem').attr('fill', 'var(--muted)').attr('font-weight', '600').text('TOTAL');
+
+      const leg = document.createElement('div'); leg.className = 'legend';
+      data.forEach((d, i) => {
+        const pct = d.pct !== undefined ? d.pct : ((d.value / total) * 100).toFixed(1);
+        leg.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${COLORS[i]}"></div>${d.label} <span style="color:var(--text);font-weight:700">${pct}%</span></div>`;
+      });
+      document.getElementById(id).appendChild(leg);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       2. HORIZONTAL BAR CHART
+    ═══════════════════════════════════════════════════ */
+    function drawHBar(id, data, labelW = 130) {
+      const W = cw(id), barH = 24, gap = 14, pad = 8;
+      const H = data.length * (barH + gap) + pad;
+      const max = d3.max(data, d => d.value), total = d3.sum(data, d => d.value);
+      const xMax = W - labelW - 40;
+
+      const svg = d3.select('#' + id).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+
+      data.forEach((d, i) => {
+        const y = i * (barH + gap) + pad, bw = (d.value / max) * xMax;
+        const pct = ((d.value / total) * 100).toFixed(1);
+        const color = COLORS[i % COLORS.length];
+
+        svg.append('text').attr('x', 0).attr('y', y + barH / 2 + 4)
+          .attr('font-size', '0.75rem').attr('fill', 'var(--text)').attr('font-weight', '500')
+          .text(d.label.length > 18 ? d.label.slice(0, 17) + '…' : d.label);
+
+        // Track
+        svg.append('rect').attr('x', labelW).attr('y', y).attr('width', xMax).attr('height', barH)
+          .attr('rx', 4).attr('fill', 'var(--s2)').attr('stroke', 'var(--border)');
+
+        // Bar
+        const bar = svg.append('rect').attr('x', labelW).attr('y', y).attr('width', 0).attr('height', barH)
+          .attr('rx', 4).attr('fill', color).style('cursor', 'pointer')
+          .on('mouseenter', evt => showTip(evt, `<strong>${d.label}</strong><span class="tip-val">${d.value}</span> responses (${pct}%)`))
+          .on('mousemove', moveTip).on('mouseleave', hideTip);
+
+        bar.transition().duration(800).delay(i * 70).attr('width', bw);
+
+        // Text Value
+        const vx = labelW + bw + 6;
+        svg.append('text').attr('x', vx > W - 10 ? labelW + 6 : vx).attr('y', y + barH / 2 + 4)
+          .attr('font-family', 'JetBrains Mono').attr('font-size', '0.7rem').attr('font-weight', '700')
+          .attr('fill', vx > W - 10 ? '#FFF' : 'var(--muted2)').text(d.value)
+          .attr('opacity', 0).transition().duration(500).delay(i * 70 + 400).attr('opacity', 1);
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════
+       3. RADAR / SPIDER CHART
+    ═══════════════════════════════════════════════════ */
+    function drawRadar(id, data) {
+      const W = cw(id), H = 250;
+      const cx = W / 2, cy = H / 2 + 5, R = Math.min(cx - 55, cy - 30);
+      const n = data.length, maxV = 5, levels = 5;
+      const ang = i => (i / n) * 2 * Math.PI - Math.PI / 2;
+      const px = (v, i) => cx + (v / maxV) * R * Math.cos(ang(i));
+      const py = (v, i) => cy + (v / maxV) * R * Math.sin(ang(i));
+
+      const svg = d3.select('#' + id).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+
+      // Grid
+      for (let l = 1; l <= levels; l++) {
+        const pts = d3.range(n).map(i => [cx + R * (l / levels) * Math.cos(ang(i)), cy + R * (l / levels) * Math.sin(ang(i))]);
+        svg.append('polygon').attr('points', pts.map(p => p.join(',')).join(' '))
+          .attr('fill', 'none').attr('stroke', 'rgba(0,0,0,0.06)').attr('stroke-width', 1);
+      }
+
+      // Axes
+      data.forEach((d, i) => {
+        svg.append('line').attr('x1', cx).attr('y1', cy).attr('x2', px(maxV, i)).attr('y2', py(maxV, i))
+          .attr('stroke', 'rgba(0,0,0,0.06)');
+
+        const lx = cx + (R + 18) * Math.cos(ang(i)), ly = cy + (R + 15) * Math.sin(ang(i));
+        const anchor = Math.abs(Math.cos(ang(i))) < 0.1 ? 'middle' : (Math.cos(ang(i)) > 0 ? 'start' : 'end');
+        const words = d.label.split(' ');
+        words.forEach((w, wi) => {
+          svg.append('text').attr('x', lx).attr('y', ly + wi * 12)
+            .attr('text-anchor', anchor).attr('font-size', '0.65rem').attr('font-weight', '600')
+            .attr('fill', 'var(--muted2)').text(w);
+        });
+      });
+
+      // Data Area
+      const pts = data.map((d, i) => [px(d.value, i), py(d.value, i)]);
+      svg.append('polygon').attr('points', pts.map(p => p.join(',')).join(' '))
+        .attr('fill', 'rgba(37, 99, 235, 0.15)').attr('stroke', 'var(--c1)').attr('stroke-width', 2)
+        .attr('opacity', 0).transition().duration(900).attr('opacity', 1);
+
+      // Points
+      data.forEach((d, i) => {
+        svg.append('circle').attr('cx', px(d.value, i)).attr('cy', py(d.value, i)).attr('r', 4)
+          .attr('fill', 'var(--c1)').attr('stroke', '#FFF').attr('stroke-width', 2)
+          .style('cursor', 'pointer').attr('opacity', 0)
+          .on('mouseenter', evt => showTip(evt, `<strong>${d.label}</strong>Score: <span class="tip-val">${d.value}</span> / 5.0`))
+          .on('mousemove', moveTip).on('mouseleave', hideTip)
+          .transition().duration(400).delay(900 + i * 60).attr('opacity', 1);
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════
+       4. GROUPED BAR — ADOPTION
+    ═══════════════════════════════════════════════════ */
+    function drawAdoption(id, data) {
+      const W = cw(id), H = 210, m = { top: 15, right: 15, bottom: 50, left: 25 };
+      const iW = W - m.left - m.right, iH = H - m.top - m.bottom;
+      const svg = d3.select('#' + id).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+      const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
+
+      const groups = ['Platform Use Intent', 'Willingness to Recommend'];
+      const catColors = { 'Yes': 'var(--c2)', 'Maybe': 'var(--c4)', 'No': 'var(--c3)' };
+      const x0 = d3.scaleBand().domain(groups).range([0, iW]).paddingInner(0.25);
+      const x1 = d3.scaleBand().domain(['Yes', 'Maybe', 'No']).range([0, x0.bandwidth()]).padding(0.1);
+      const y = d3.scaleLinear().domain([0, 75]).range([iH, 0]);
+
+      g.append('g').call(d3.axisLeft(y).ticks(4).tickSize(-iW).tickFormat(d => d))
+        .call(g => g.select('.domain').remove())
+        .call(g => g.selectAll('.tick line').attr('stroke', 'rgba(0,0,0,0.05)'))
+        .call(g => g.selectAll('.tick text').attr('fill', 'var(--muted)').attr('font-size', '0.65rem'));
+
+      groups.forEach((grp, gi) => {
+        const vals = gi === 0 ?
+          { Yes: data[0].valuePlatform, Maybe: data[1].valuePlatform, No: data[2].valuePlatform } :
+          { Yes: data[0].valueRecommend, Maybe: data[1].valueRecommend, No: data[2].valueRecommend };
+
+        ['Yes', 'Maybe', 'No'].forEach((cat, ci) => {
+          g.append('rect').attr('x', x0(grp) + x1(cat)).attr('y', iH).attr('width', x1.bandwidth()).attr('height', 0)
+            .attr('rx', 3).attr('fill', catColors[cat]).style('cursor', 'pointer')
+            .on('mouseenter', evt => showTip(evt, `<strong>${grp}</strong>Response - ${cat}: <span class="tip-val">${vals[cat]}</span>`))
+            .on('mousemove', moveTip).on('mouseleave', hideTip)
+            .transition().duration(700).delay(gi * 150 + ci * 50).attr('y', y(vals[cat])).attr('height', iH - y(vals[cat]));
+
+          g.append('text').attr('x', x0(grp) + x1(cat) + x1.bandwidth() / 2).attr('y', y(vals[cat]) - 5)
+            .attr('text-anchor', 'middle').attr('font-size', '0.65rem').attr('fill', 'var(--text)').attr('font-weight', '700')
+            .attr('opacity', 0).text(vals[cat]).transition().duration(400).delay(500).attr('opacity', 1);
+        });
+        g.append('text').attr('x', x0(grp) + x0.bandwidth() / 2).attr('y', iH + 22)
+          .attr('text-anchor', 'middle').attr('font-size', '0.75rem').attr('fill', 'var(--text)').attr('font-weight', '600').text(grp);
+      });
+
+      const legG = svg.append('g').attr('transform', `translate(${m.left},${H - 12})`);
+      ['Yes', 'Maybe', 'No'].forEach((cat, i) => {
+        legG.append('rect').attr('x', i * 70).attr('y', 0).attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', catColors[cat]);
+        legG.append('text').attr('x', i * 70 + 14).attr('y', 9).attr('font-size', '0.7rem').attr('font-weight', '500').attr('fill', 'var(--muted2)').text(cat);
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════
+       5. RATING PROGRESS BARS
+    ═══════════════════════════════════════════════════ */
+    function drawRatingBars(id, data) {
+      const container = document.getElementById(id);
+      data.forEach(d => {
+        const wrap = document.createElement('div'); wrap.className = 'stat-bar-wrap';
+        wrap.innerHTML = `
+      <div class="stat-bar-label">${d.label}</div>
+      <div class="stat-bar-track"><div class="stat-bar-fill" style="background:${d.color};width:0" data-target="${(d.value / 5) * 100}"></div></div>
+      <div class="stat-bar-val">${d.value}</div>
+    `;
+        container.appendChild(wrap);
+      });
+      setTimeout(() => { container.querySelectorAll('.stat-bar-fill').forEach(el => el.style.width = el.dataset.target + '%'); }, 200);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       6. INSIGHTS CARD
+    ═══════════════════════════════════════════════════ */
+    function buildInsights() {
+      const container = document.getElementById('insights-card');
+      const insights = [
+        { num: '74.8%', color: 'var(--c1)', text: 'rely on <strong>Private Bus</strong> as primary transport — focus initial integrations here.' },
+        { num: '81.7%', color: 'var(--c6)', text: 'are <strong>University Students</strong> — highly responsive to digital discounts and mobile UX.' },
+        { num: '3.2/5', color: 'var(--c4)', text: 'average current satisfaction shows <strong>high market potential</strong> for disruption.' },
+        { num: '#1', color: 'var(--c3)', text: 'barrier is <strong>Payment Security</strong> (68 responses). Trust indicators are mandatory.' },
+        { num: '78', color: 'var(--c5)', text: 'users prioritize an <strong>Easy Booking Process</strong> over pricing or loyalty features.' }
+      ];
+      insights.forEach(ins => {
+        container.innerHTML += `
+      <div class="insight-row">
+        <div class="insight-num" style="color:${ins.color}">${ins.num}</div>
+        <div class="insight-text">${ins.text}</div>
+      </div>`;
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════
+       INIT ALL
+    ═══════════════════════════════════════════════════ */
+    function initAll() {
+      drawDonut('chart-freq', DATA.frequency);
+      drawHBar('chart-demo', DATA.demographics, 140);
+      drawHBar('chart-transport', DATA.transport, 130);
+      drawHBar('chart-booking', DATA.bookingMethods, 110);
+      drawDonut('chart-platform', DATA.platformPref);
+      drawRadar('chart-radar', DATA.ratings);
+      drawHBar('chart-features', DATA.features, 140);
+      drawHBar('chart-concerns', DATA.concerns, 120);
+      drawAdoption('chart-adoption', DATA.adoption);
+      drawHBar('chart-services', DATA.services, 120);
+      drawHBar('chart-factors', DATA.factors, 125);
+      drawRatingBars('chart-ratings-bars', DATA.ratingsBars);
+      buildInsights();
+    }
+
+    window.addEventListener('load', () => { setTimeout(initAll, 100); });
+  </script>
+</body>
+
+</html>
